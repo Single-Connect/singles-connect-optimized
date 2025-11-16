@@ -5,7 +5,6 @@ import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +88,69 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserProfile(userId: number, data: {
+  name?: string;
+  birthDate?: Date;
+  bio?: string;
+  interests?: string;
+  profilePhotoUrl?: string;
+  hairColor?: string;
+  eyeColor?: string;
+  height?: number;
+  weight?: number;
+  origin?: string;
+  bodyType?: string;
+  hasChildren?: boolean;
+  wantsChildren?: boolean;
+  lookingFor?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(users).set(data).where(eq(users.id, userId));
+  return getUserById(userId);
+}
+
+export async function updateUserCoins(userId: number, amount: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const user = await getUserById(userId);
+  if (!user) throw new Error("User not found");
+
+  const newCoins = (user.coins || 0) + amount;
+  await db.update(users).set({ coins: newCoins }).where(eq(users.id, userId));
+  
+  return newCoins;
+}
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(users);
+}
+
+export async function updateUserRole(userId: number, role: 'user' | 'admin') {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+  return getUserById(userId);
+}
+
+export async function updateUserVipStatus(userId: number, isVip: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(users).set({ isVip }).where(eq(users.id, userId));
+  return getUserById(userId);
+}
