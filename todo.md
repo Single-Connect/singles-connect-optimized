@@ -145,8 +145,13 @@
 - ✅ Profil-Seite mit Bearbeitung
 - ✅ tRPC Backend (Profile, Swipe, Coins, Admin)
 
-**Als Nächstes:**
-- Geschenke-Shop
-- Produkt-Berater mit AI
-- Gamification
-- Admin-Dashboard
+**Als Nächstes (DIESE NACHT!):**
+- [ ] Gamification-System (Daily Rewards, Achievements, Levels, Streak)
+- [ ] Chat-System mit Echtzeit-Nachrichten
+- [ ] Matches-Übersicht und Match-Details
+- [ ] Compatibility Quiz (20 Fragen + Match-%)
+- [ ] Premium-Features (Who Liked Me, Boost, Unlimited Swipes)
+- [ ] Advanced Filters (Religion, Kinder, etc.)
+- [ ] Question Game (Spielerisch kennenlernen)
+- [ ] Admin-Account mit unbegrenztem Zugriff
+- [ ] Deployment auf www.single-connect.com

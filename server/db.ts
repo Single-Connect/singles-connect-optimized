@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, swipes, matches, dailyRewards } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -153,4 +153,85 @@ export async function updateUserVipStatus(userId: number, isVip: boolean) {
 
   await db.update(users).set({ isVip }).where(eq(users.id, userId));
   return getUserById(userId);
+}
+
+
+// Gamification functions
+export async function getUserSwipeCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select().from(swipes).where(eq(swipes.userId, userId));
+  return result.length;
+}
+
+export async function getUserMatchCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select().from(matches).where(
+    or(eq(matches.userId1, userId), eq(matches.userId2, userId))
+  );
+  return result.length;
+}
+
+export async function getDailyReward(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(dailyRewards).where(eq(dailyRewards.userId, userId)).limit(1);
+  return result[0] || null;
+}
+
+export async function claimDailyReward(userId: number, streakCount: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  
+  await db.insert(dailyRewards).values({
+    userId,
+    lastClaimDate: today,
+    streakCount,
+  }).onDuplicateKeyUpdate({
+    set: {
+      lastClaimDate: today,
+      streakCount,
+    },
+  });
+}
+
+export async function addCoins(userId: number, amount: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const user = await getUserById(userId);
+  const newBalance = (user?.coins || 0) + amount;
+  
+  await db.update(users).set({ coins: newBalance }).where(eq(users.id, userId));
+  return newBalance;
+}
+
+export async function addXP(userId: number, amount: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const user = await getUserById(userId);
+  const newXP = (user?.xp || 0) + amount;
+  
+  // Level up logic
+  const LEVELS = [
+    { level: 1, xpRequired: 0 },
+    { level: 2, xpRequired: 100 },
+    { level: 3, xpRequired: 300 },
+    { level: 4, xpRequired: 600 },
+    { level: 5, xpRequired: 1000 },
+    { level: 6, xpRequired: 1500 },
+    { level: 7, xpRequired: 2500 },
+    { level: 8, xpRequired: 5000 },
+  ];
+  
+  const newLevel = LEVELS.reverse().find(l => newXP >= l.xpRequired)?.level || 1;
+  
+  await db.update(users).set({ xp: newXP, level: newLevel }).where(eq(users.id, userId));
 }

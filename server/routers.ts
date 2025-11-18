@@ -13,6 +13,49 @@ import { ENV } from "./_core/env";
 export const appRouter = router({
   system: systemRouter,
   
+  gamification: router({
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      const user = await db.getUserById(ctx.user.id);
+      return {
+        level: user?.level || 1,
+        xp: user?.xp || 0,
+        achievements: user?.achievements ? JSON.parse(user.achievements as string) : [],
+        totalSwipes: await db.getUserSwipeCount(ctx.user.id),
+        totalMatches: await db.getUserMatchCount(ctx.user.id),
+        totalMessages: 0,
+      };
+    }),
+    getDailyReward: protectedProcedure.query(async ({ ctx }) => {
+      const reward = await db.getDailyReward(ctx.user.id);
+      const today = new Date().toISOString().split('T')[0];
+      const claimed = reward?.lastClaimDate === today;
+      return {
+        streak: reward?.streakCount || 0,
+        coins: Math.min(10 + (reward?.streakCount || 0) * 2, 50),
+        claimed,
+      };
+    }),
+    claimDailyReward: protectedProcedure.mutation(async ({ ctx }) => {
+      const reward = await db.getDailyReward(ctx.user.id);
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (reward?.lastClaimDate === today) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Belohnung bereits abgeholt!' });
+      }
+      
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const isStreak = reward?.lastClaimDate === yesterday;
+      const newStreak = isStreak ? (reward.streakCount || 0) + 1 : 1;
+      const coins = Math.min(10 + newStreak * 2, 50);
+      
+      await db.claimDailyReward(ctx.user.id, newStreak);
+      await db.addCoins(ctx.user.id, coins);
+      await db.addXP(ctx.user.id, 10);
+      
+      return { coins, streak: newStreak };
+    }),
+  }),
+  
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
