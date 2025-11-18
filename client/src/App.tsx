@@ -11,6 +11,7 @@ import Gamification from "./pages/Gamification";
 import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
 import CompatibilityQuiz from "./pages/CompatibilityQuiz";
+import Premium from "./pages/Premium";
 import Gifts from "./pages/Gifts";
 import Shop from "./pages/Shop";
 import ProductAdvisor from "./pages/ProductAdvisor";
@@ -25,6 +26,7 @@ function Router() {
       <Route path={"/matches"} component={Matches} />
       <Route path={"/chat/:matchId"} component={Chat} />
       <Route path={"/quiz"} component={CompatibilityQuiz} />
+      <Route path={"/premium"} component={Premium} />
       <Route path={"/gifts"} component={Gifts} />
       <Route path={"/shop"} component={Shop} />
       <Route path={"/products"} component={ProductAdvisor} />

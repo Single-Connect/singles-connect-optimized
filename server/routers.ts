@@ -152,50 +152,7 @@ export const appRouter = router({
       }),
   }),
 
-  admin: router({
-    getUsers: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-      return db.getAllUsers();
-    }),
 
-    updateUserRole: protectedProcedure
-      .input(z.object({
-        userId: z.number(),
-        role: z.enum(['user', 'admin']),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== 'admin') {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        return db.updateUserRole(input.userId, input.role);
-      }),
-
-    updateUserVipStatus: protectedProcedure
-      .input(z.object({
-        userId: z.number(),
-        isVip: z.boolean(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== 'admin') {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        return db.updateUserVipStatus(input.userId, input.isVip);
-      }),
-
-    addUserCoins: protectedProcedure
-      .input(z.object({
-        userId: z.number(),
-        amount: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== 'admin') {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
-        return db.updateUserCoins(input.userId, input.amount);
-      }),
-  }),
 
   productAdvisor: router({
     chat: protectedProcedure
@@ -239,6 +196,76 @@ Sei persönlich, hilfsbereit und enthusiastisch! Nutze Emojis sparsam aber passe
         return {
           response: responseText
         };
+      }),
+  }),
+
+  admin: router({
+    setupAdmin: protectedProcedure.mutation(async ({ ctx }) => {
+      // Only allow owner to setup admin
+      if (ctx.user.openId !== ENV.ownerOpenId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only owner can setup admin" });
+      }
+      
+      const success = await db.setupAdminUser(ctx.user.id);
+      if (!success) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to setup admin" });
+      }
+      
+      return { success: true };
+    }),
+    
+    isAdmin: protectedProcedure.query(async ({ ctx }) => {
+      return await db.isAdmin(ctx.user.id);
+    }),
+    
+    getAllUsers: protectedProcedure.query(async ({ ctx }) => {
+      const isAdminUser = await db.isAdmin(ctx.user.id);
+      if (!isAdminUser) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+      }
+      
+      return await db.getAllUsers();
+    }),
+    
+    updateUserRole: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(['user', 'admin']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const isAdminUser = await db.isAdmin(ctx.user.id);
+        if (!isAdminUser) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+        }
+        return db.updateUserRole(input.userId, input.role);
+      }),
+
+    updateUserVipStatus: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        isVip: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const isAdminUser = await db.isAdmin(ctx.user.id);
+        if (!isAdminUser) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+        }
+        return db.updateUserVipStatus(input.userId, input.isVip);
+      }),
+
+    grantCoins: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        amount: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const isAdminUser = await db.isAdmin(ctx.user.id);
+        if (!isAdminUser) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+        }
+        
+        await db.addCoins(input.userId, input.amount);
+        return { success: true };
       }),
   }),
 

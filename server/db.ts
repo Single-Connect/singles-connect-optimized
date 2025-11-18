@@ -235,3 +235,49 @@ export async function addXP(userId: number, amount: number): Promise<void> {
   
   await db.update(users).set({ xp: newXP, level: newLevel }).where(eq(users.id, userId));
 }
+
+
+// Setup admin user with unlimited access
+export async function setupAdminUser(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot setup admin: database not available");
+    return false;
+  }
+
+  try {
+    await db.update(users)
+      .set({
+        role: "admin",
+        isPremium: true,
+        coins: 999999,
+        level: 99,
+        xp: 999999,
+        premiumExpiresAt: null, // Lifetime premium
+      })
+      .where(eq(users.id, userId));
+    
+    return true;
+  } catch (error) {
+    console.error("[Database] Failed to setup admin:", error);
+    return false;
+  }
+}
+
+// Check if user is admin
+export async function isAdmin(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    const result = await db.select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    return result.length > 0 && result[0].role === "admin";
+  } catch (error) {
+    console.error("[Database] Failed to check admin:", error);
+    return false;
+  }
+}
