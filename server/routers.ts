@@ -5,6 +5,10 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
+import { invokeLLM, type Message } from "./_core/llm";
+import Stripe from "stripe";
+import { COIN_PRODUCTS, getProductById } from "./products";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   system: systemRouter,
@@ -146,6 +150,110 @@ export const appRouter = router({
         }
         return db.updateUserCoins(input.userId, input.amount);
       }),
+  }),
+
+  productAdvisor: router({
+    chat: protectedProcedure
+      .input(z.object({
+        message: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Call OpenAI for intelligent product recommendations
+        const systemPrompt = `Du bist ein freundlicher und kompetenter Produkt-Berater für eine Dating-App. 
+Deine Aufgabe ist es, Nutzern bei der Auswahl von Produkten zu helfen - insbesondere:
+- Hautpflege und Kosmetik
+- Parfüm und Düfte
+- Mode und Accessoires
+- Geschenke für Dates
+- Wellness und Self-Care
+
+Gib konkrete Produktempfehlungen mit:
+1. Produktname und Marke
+2. Warum es passt
+3. Ungefährer Preis
+4. Wo man es kaufen kann (Amazon, Douglas, etc.)
+
+Sei persönlich, hilfsbereit und enthusiastisch! Nutze Emojis sparsam aber passend.`;
+
+        const messages: Message[] = [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: input.message
+          }
+        ];
+
+        const response = await invokeLLM({ messages });
+
+        const content = response.choices[0]?.message?.content;
+        const responseText = typeof content === 'string' ? content : "Entschuldigung, ich konnte keine Antwort generieren.";
+        
+        return {
+          response: responseText
+        };
+      }),
+  }),
+
+  payment: router({
+    createCheckoutSession: protectedProcedure
+      .input(z.object({
+        packageId: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const product = getProductById(input.packageId);
+        if (!product) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+        }
+
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+          apiVersion: "2025-10-29.clover",
+        });
+
+        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        const totalCoins = product.coins + (product.bonus || 0);
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          line_items: [
+            {
+              price_data: {
+                currency: "eur",
+                product_data: {
+                  name: product.name,
+                  description: `${totalCoins} Coins für Single-Connect`,
+                },
+                unit_amount: product.price,
+              },
+              quantity: 1,
+            },
+          ],
+          mode: "payment",
+          success_url: `${origin}/shop?success=true`,
+          cancel_url: `${origin}/shop?canceled=true`,
+          customer_email: ctx.user.email || undefined,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            package_id: product.id,
+            coins: totalCoins.toString(),
+            customer_email: ctx.user.email || "",
+            customer_name: ctx.user.name || "",
+          },
+          allow_promotion_codes: true,
+        });
+
+        return {
+          url: session.url,
+        };
+      }),
+
+    getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      // TODO: Implement payment history from database
+      return [];
+    }),
   }),
 });
 
