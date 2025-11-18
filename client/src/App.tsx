@@ -7,6 +7,11 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Swipe from "./pages/Swipe";
 import Profile from "./pages/Profile";
+import Gamification from "./pages/Gamification";
+import Matches from "./pages/Matches";
+import Gifts from "./pages/Gifts";
+import Shop from "./pages/Shop";
+import ProductAdvisor from "./pages/ProductAdvisor";
 
 function Router() {
   return (
@@ -14,6 +19,11 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/swipe"} component={Swipe} />
       <Route path={"/profile"} component={Profile} />
+      <Route path={"/gamification"} component={Gamification} />
+      <Route path={"/matches"} component={Matches} />
+      <Route path={"/gifts"} component={Gifts} />
+      <Route path={"/shop"} component={Shop} />
+      <Route path={"/products"} component={ProductAdvisor} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

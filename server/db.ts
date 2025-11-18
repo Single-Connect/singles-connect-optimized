@@ -161,7 +161,7 @@ export async function getUserSwipeCount(userId: number): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
   
-  const result = await db.select().from(swipes).where(eq(swipes.userId, userId));
+  const result = await db.select().from(swipes).where(eq(swipes.swiperId, userId));
   return result.length;
 }
 
@@ -170,7 +170,7 @@ export async function getUserMatchCount(userId: number): Promise<number> {
   if (!db) return 0;
   
   const result = await db.select().from(matches).where(
-    or(eq(matches.userId1, userId), eq(matches.userId2, userId))
+    or(eq(matches.user1Id, userId), eq(matches.user2Id, userId))
   );
   return result.length;
 }
@@ -187,7 +187,7 @@ export async function claimDailyReward(userId: number, streakCount: number): Pro
   const db = await getDb();
   if (!db) return;
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
   
   await db.insert(dailyRewards).values({
     userId,

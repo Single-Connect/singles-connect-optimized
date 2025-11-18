@@ -28,7 +28,8 @@ export const appRouter = router({
     getDailyReward: protectedProcedure.query(async ({ ctx }) => {
       const reward = await db.getDailyReward(ctx.user.id);
       const today = new Date().toISOString().split('T')[0];
-      const claimed = reward?.lastClaimDate === today;
+      const lastClaimDate = reward?.lastClaimDate ? new Date(reward.lastClaimDate).toISOString().split('T')[0] : null;
+      const claimed = lastClaimDate === today;
       return {
         streak: reward?.streakCount || 0,
         coins: Math.min(10 + (reward?.streakCount || 0) * 2, 50),
@@ -38,14 +39,15 @@ export const appRouter = router({
     claimDailyReward: protectedProcedure.mutation(async ({ ctx }) => {
       const reward = await db.getDailyReward(ctx.user.id);
       const today = new Date().toISOString().split('T')[0];
+      const lastClaimDate = reward?.lastClaimDate ? new Date(reward.lastClaimDate).toISOString().split('T')[0] : null;
       
-      if (reward?.lastClaimDate === today) {
+      if (lastClaimDate === today) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Belohnung bereits abgeholt!' });
       }
       
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const isStreak = reward?.lastClaimDate === yesterday;
-      const newStreak = isStreak ? (reward.streakCount || 0) + 1 : 1;
+      const isStreak = lastClaimDate === yesterday;
+      const newStreak = isStreak ? (reward?.streakCount || 0) + 1 : 1;
       const coins = Math.min(10 + newStreak * 2, 50);
       
       await db.claimDailyReward(ctx.user.id, newStreak);

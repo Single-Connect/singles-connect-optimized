@@ -41,6 +41,7 @@ export const users = mysqlTable("users", {
   xp: int("xp").default(0).notNull(),
   streakCount: int("streakCount").default(0).notNull(),
   lastLoginDate: timestamp("lastLoginDate"),
+  achievements: text("achievements"), // JSON array of achievement IDs
   
   // Premium
   isPremium: boolean("isPremium").default(false).notNull(),

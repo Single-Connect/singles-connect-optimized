@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import FlyingHearts from "@/components/FlyingHearts";
+import Navigation from "@/components/Navigation";
 import { getLoginUrl } from "@/const";
 import { Heart, X, Star } from "lucide-react";
 import { useLocation } from "wouter";
@@ -95,6 +96,7 @@ export default function Swipe() {
           </p>
         </div>
       </div>
+      <Navigation />
     </div>
   );
 }
