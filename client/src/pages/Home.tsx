@@ -82,7 +82,7 @@ export default function Home() {
           <FeatureCard
             icon={<Users className="w-12 h-12 text-purple-500" />}
             title="Aktive Community"
-            description="Über 10.000 aktive Singles warten darauf, dich kennenzulernen."
+            description="Werde Teil einer wachsenden Community von Singles, die echte Verbindungen suchen."
           />
           <FeatureCard
             icon={<Star className="w-12 h-12 text-orange-500" />}
@@ -91,12 +91,11 @@ export default function Home() {
           />
         </div>
 
-        {/* Stats Section */}
-        <div className="grid md:grid-cols-4 gap-8 mt-20 text-center">
-          <StatCard number="10.000+" label="Aktive Singles" />
-          <StatCard number="50.000+" label="Erfolgreiche Matches" />
-          <StatCard number="1.000+" label="Dating Events" />
-          <StatCard number="98%" label="Zufriedenheit" />
+        {/* Vision Section */}
+        <div className="grid md:grid-cols-3 gap-8 mt-20 text-center">
+          <StatCard number="💕" label="Echte Verbindungen" />
+          <StatCard number="🎯" label="Intelligentes Matching" />
+          <StatCard number="🎁" label="Einzigartige Features" />
         </div>
 
         {/* CTA Section */}

@@ -155,3 +155,18 @@
 - [ ] Question Game (Spielerisch kennenlernen) - TODO
 - [ ] Admin-Account mit unbegrenztem Zugriff - IN ARBEIT
 - [ ] Deployment auf www.single-connect.com - TODO
+
+
+---
+
+## 🚨 KRITISCHE BUGS (SOFORT FIXEN!) 🚨
+
+- [x] **Landing Page: Fake-Statistiken entfernen** (10.000+ Singles, 50.000+ Matches, 1.000+ Events, 98% Zufriedenheit)
+- [x] **Landing Page: Durch ehrliche Marketing-Texte oder Ziele ersetzen**
+- [ ] **Passwort-Registrierung: "Password does not match" Fehler beheben**
+- [ ] **Admin-Zugang: Sicherstellen dass paco.miguel.hartmann@gmx.at Admin-Rechte bekommt**
+- [ ] **Registrierung testen: Für normale Kunden funktionsfähig machen**
+- [ ] **OAuth Redirect-URI: Alle 4 Domains registrieren**
+
+**Hinzugefügt am:** 20.11.2025 01:05 Uhr
+- [ ] **KRITISCH: www.single-connect.com leitet direkt zu Manus OAuth statt Landing Page zu zeigen**
